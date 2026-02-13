@@ -9,13 +9,12 @@ class GraphVisualizer:
         self.start_node = start_node
         self.end_node = end_node
         
-        # Setup Canvas (2 Kolom)
         self.fig, (self.ax1, self.ax2) = plt.subplots(1, 2, figsize=(14, 7), facecolor='black')
         self.ax_map = {
             'Dijkstra': self.ax1,
             'A-Star': self.ax2
         }
-        self.data_store = {} # Menyimpan data hasil algoritma
+        self.data_store = {}
         
     def setup_axis(self, algo_name, stats):
         """Menyiapkan tampilan awal peta dan teks statistik."""
@@ -24,18 +23,15 @@ class GraphVisualizer:
         ax = self.ax_map[algo_name]
         ax.set_facecolor('black')
         
-        # Plot dasar peta
         ox.plot_graph(self.graph, ax=ax, show=False, close=False, 
                       edge_color='#333333', bgcolor='black', node_size=0, edge_linewidth=0.5)
         
-        # Judul & Titik Start/End
         ax.set_title(algo_name, color='white', fontsize=14, fontweight='bold', pad=10)
         ax.scatter(self.graph.nodes[self.start_node]['x'], self.graph.nodes[self.start_node]['y'], 
                    c='red', s=50, zorder=10, label='Start')
         ax.scatter(self.graph.nodes[self.end_node]['x'], self.graph.nodes[self.end_node]['y'], 
                    c='green', s=50, zorder=10, label='Finish')
 
-        # Info Statistik
         info_text = (
             f"Time: {stats['time']:.4f} s\n"
             f"Explored: {stats['explored']} segmen\n"
@@ -46,14 +42,11 @@ class GraphVisualizer:
                 bbox=dict(facecolor='black', alpha=0.7, edgecolor='white', boxstyle='round,pad=0.5'))
 
     def register_algorithm(self, name, path, explored_lines, color, stats):
-        """Menyimpan hasil algoritma untuk dianimasikan nanti."""
         self.setup_axis(name, stats)
         
-        # LineCollection untuk animasi eksplorasi
         lc = LineCollection([], colors=color, linewidths=1.0, alpha=0.6, zorder=3)
         self.ax_map[name].add_collection(lc)
         
-        # Line plot untuk hasil jalur akhir
         path_line, = self.ax_map[name].plot([], [], c='yellow', lw=3, zorder=5)
         
         self.data_store[name] = {
@@ -64,7 +57,6 @@ class GraphVisualizer:
         }
 
     def _update_frame(self, frame):
-        """Fungsi internal untuk update animasi per frame."""
         step = frame * 50
         artists = []
         
@@ -74,23 +66,21 @@ class GraphVisualizer:
             lc = data['lc']
             path_line = data['path_line']
             
-            # Animasi Eksplorasi
+            
             if step < len(explored):
                 lc.set_segments(explored[:step])
-            # Animasi Jalur Akhir (Jika eksplorasi selesai)
+            
             elif final_path:
                 rx = [self.graph.nodes[n]['x'] for n in final_path]
                 ry = [self.graph.nodes[n]['y'] for n in final_path]
                 path_line.set_data(rx, ry)
-                lc.set_segments([]) # Optional: Hilangkan jejak eksplorasi agar bersih
+                lc.set_segments([]) 
             
             artists.extend([lc, path_line])
             
         return artists
 
     def show_animation(self):
-        """Menjalankan animasi."""
-        # Hitung frame maksimal berdasarkan data terbanyak
         max_len = 0
         for data in self.data_store.values():
             max_len = max(max_len, len(data['explored']))
